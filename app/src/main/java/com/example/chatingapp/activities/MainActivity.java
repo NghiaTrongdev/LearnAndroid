@@ -1,8 +1,10 @@
-package com.example.chatingapp;
+package com.example.chatingapp.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+
+import com.example.chatingapp.R;
 
 public class MainActivity extends AppCompatActivity {
 

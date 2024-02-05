@@ -26,6 +26,7 @@
             android:fontFamily="cursive"
             />
         <FrameLayout
+            android:id="@+id/layoutImage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
@@ -40,6 +41,7 @@
                 android:scaleType="centerCrop"
                 />
             <TextView
+                android:id="@+id/textAddImage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -112,16 +114,29 @@
             android:importantForAutofill="no"
             />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/buttonSignIn"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            app:cornerRadius="20dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="30dp"
-            android:text="@string/sign_up"
-            android:textStyle="bold"
-            android:textSize="15sp"
-            android:textColor="@color/white"/>
+            android:animateLayoutChanges="true">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonSignUp"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                app:cornerRadius="20dp"
+                android:text="@string/sign_up"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:textColor="@color/white"/>
+            <ProgressBar
+                android:id="@+id/progressbar"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_gravity="center"
+                android:visibility="invisible"
+                />
+        </FrameLayout>
+
 
         <TextView
             android:id="@+id/textviewSignIn"
