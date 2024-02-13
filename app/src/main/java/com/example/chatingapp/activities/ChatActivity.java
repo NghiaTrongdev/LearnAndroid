@@ -15,7 +15,10 @@ import com.example.chatingapp.R;
 import com.example.chatingapp.databinding.ActivityChatBinding;
 import com.example.chatingapp.utilities.Constans;
 import com.example.chatingapp.utilities.PreferenceManager;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -36,6 +39,7 @@ public class ChatActivity extends AppCompatActivity {
     private PreferenceManager preferenceManager;
     private ChatAdapter chatAdapter;
     private FirebaseFirestore database;
+    private String conversationId = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +68,22 @@ public class ChatActivity extends AppCompatActivity {
         message.put(Constans.KEY_MESSAGE,binding.inputMessage.getText().toString());
         message.put(Constans.KEY_TIMESTAMP,new Date());
         database.collection(Constans.KEY_COLLECTION_CHAT).add(message);
+
+        if(conversationId != null){
+            updateConversion(binding.inputMessage.getText().toString());
+        } else {
+            HashMap<String, Object> conversion = new HashMap<>();
+            conversion.put(Constans.KEY_SENDER_ID,preferenceManager.getString(Constans.KEY_USER_ID));
+            conversion.put(Constans.KEY_SENDER_IMAGE,preferenceManager.getString(Constans.KEY_IMAGE));
+            conversion.put(Constans.KEY_SENDER_NAME,preferenceManager.getString(Constans.KEY_NAME));
+            conversion.put(Constans.KEY_RECEIVED_ID,receivedUser.id);
+            conversion.put(Constans.KEY_RECEIVER_NAME,receivedUser.name);
+            conversion.put(Constans.KEY_RECEIVER_IMAGE,receivedUser.image);
+            conversion.put(Constans.KEY_LAST_MESSAGE,binding.inputMessage.getText().toString());
+            conversion.put(Constans.KEY_TIMESTAMP,new Date());
+            addConversion(conversion);
+
+        }
         binding.inputMessage.setText(null);
     }
     private void listenerMessage(){
@@ -104,6 +124,9 @@ public class ChatActivity extends AppCompatActivity {
             binding.chatRecycleView.setVisibility(View.VISIBLE);
         }
         binding.chatProgressBar.setVisibility(View.GONE);
+        if (conversationId == null){
+            checkConversion();
+        }
 
     };
     private Bitmap getImagefromString(String encodedImage){
@@ -120,5 +143,43 @@ public class ChatActivity extends AppCompatActivity {
     }
     private String getReadableDatetime(Date date){
         return new SimpleDateFormat("MMMM dd, yyyy - hh:mm a", Locale.getDefault()).format(date);
+    }
+    private void checkConversion(){
+        if (chatMessages.size()!=0){
+            checkConversionRemotely(
+                    preferenceManager.getString(Constans.KEY_USER_ID),
+                    receivedUser.id
+            );
+            checkConversionRemotely(
+                    receivedUser.id,
+                    preferenceManager.getString(Constans.KEY_USER_ID)
+
+            );
+        }
+    }
+    private void checkConversionRemotely(String senderId,String receivedId){
+        database.collection(Constans.KEY_COLLECTION_CONVERSATIONS)
+                .whereEqualTo(Constans.KEY_SENDER_ID,senderId)
+                .whereEqualTo(Constans.KEY_RECEIVED_ID,receivedId)
+                .get()
+                .addOnCompleteListener(conversationComplete);
+    }
+    private final OnCompleteListener<QuerySnapshot> conversationComplete = task -> {
+        if(task.isSuccessful() && task.getResult() != null && task.getResult().getDocuments().size() >0){
+            DocumentSnapshot documentSnapshot = task.getResult().getDocuments().get(0);
+            conversationId = documentSnapshot.getId();
+        }
+    };
+    private void addConversion(HashMap<String , Object> conversion){
+        database.collection(Constans.KEY_COLLECTION_CONVERSATIONS)
+                .add(conversion)
+                .addOnSuccessListener(documentReference -> conversationId = documentReference.getId());
+    }
+    private void updateConversion(String message){
+        DocumentReference documentReference = database.collection(Constans.KEY_COLLECTION_CONVERSATIONS).document(conversationId);
+        documentReference.update(
+                Constans.KEY_LAST_MESSAGE, message,
+                Constans.KEY_TIMESTAMP,new Date()
+        );
     }
 }
