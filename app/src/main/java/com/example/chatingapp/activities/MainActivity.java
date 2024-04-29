@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements ConversionListener {
+public class MainActivity extends BaseActivity implements ConversionListener {
     private ActivityMainBinding binding;
     PreferenceManager preferenceManager;
     private RecentConversationAdapter recentConversationAdapter;
@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements ConversionListene
     }
     private void init(){
         conservations = new ArrayList<>();
+        // tạo đối tượng trỏ đến adapter
         recentConversationAdapter = new RecentConversationAdapter(conservations,this);
         database = FirebaseFirestore.getInstance();
         binding.recentConversation.setAdapter(recentConversationAdapter);
@@ -110,6 +111,9 @@ public class MainActivity extends AppCompatActivity implements ConversionListene
                 })
                 .addOnFailureListener(v -> showToast("Failed to Sign out"));
     }
+
+
+    // Lắng nghe sự kiện sau khi thực hiện truy vấn dữ liệu từ firebase
     private final EventListener<QuerySnapshot> eventListener = (value, error) -> {
         if(error != null){
             return;
@@ -159,6 +163,7 @@ public class MainActivity extends AppCompatActivity implements ConversionListene
 
     @Override
     public void onConversionClicked(User user) {
+        // tạo 1 đối tượng intent đồng thời gán key-value vào intent được chạy ở phía dưới
         Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
         intent.putExtra(Constans.KEY_USER,user);
         startActivity(intent);

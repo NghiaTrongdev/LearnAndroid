@@ -31,8 +31,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
-public class ChatActivity extends AppCompatActivity {
+public class ChatActivity extends BaseActivity {
     private ActivityChatBinding binding;
     private User receivedUser;
     private List<ChatMessage> chatMessages;
@@ -40,7 +41,7 @@ public class ChatActivity extends AppCompatActivity {
     private ChatAdapter chatAdapter;
     private FirebaseFirestore database;
     private String conversationId = null;
-
+    private Boolean isReceiverAvailable = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,7 +52,10 @@ public class ChatActivity extends AppCompatActivity {
         init();
         listenerMessage();
     }
+
+    // Khởi tạo các đối tượng
     private void init(){
+        // tạo đối tượng quản lí biến tạm
         preferenceManager = new PreferenceManager(getApplicationContext());
         chatMessages = new ArrayList<>();
         chatAdapter = new ChatAdapter(getImagefromString(receivedUser.image),
@@ -62,7 +66,10 @@ public class ChatActivity extends AppCompatActivity {
 
     }
     private void sendMessage(){
+        // Tạo đối tượng để lưu trữ tạm
         HashMap<String,Object> message = new HashMap<>();
+
+        // Lấy các giá trị để cho vào biến tạm từ lưu trũ tạm
         message.put(Constans.KEY_SENDER_ID,preferenceManager.getString(Constans.KEY_USER_ID));
         message.put(Constans.KEY_RECEIVED_ID,receivedUser.id);
         message.put(Constans.KEY_MESSAGE,binding.inputMessage.getText().toString());
@@ -85,6 +92,31 @@ public class ChatActivity extends AppCompatActivity {
 
         }
         binding.inputMessage.setText(null);
+    }
+    private void listenAvailabilityOfReceiver(){
+        database.collection(Constans.KEY_COLLECTION_USERS).document(
+                receivedUser.id
+        ).addSnapshotListener(ChatActivity.this,(value, error) -> {
+            if(error!=null){
+                return;
+            }
+            if(value !=null){
+                if(value.getLong(Constans.KEY_AVAILABILITY) != null){
+                    int availability = Objects.requireNonNull(
+                            value.getLong(Constans.KEY_AVAILABILITY)
+                    ).intValue();
+                    isReceiverAvailable = availability == 1;
+                }
+                receivedUser.token = value.getString(Constans.KEY_TOKEN_FCM);
+
+            }
+            if(isReceiverAvailable){
+                binding.textviewAvailability.setVisibility(View.VISIBLE);
+            } else {
+                binding.textviewAvailability.setVisibility(View.GONE);
+            }
+            receivedUser.token = value.getString(Constans.KEY_TOKEN_FCM);
+        });
     }
     private void listenerMessage(){
         database.collection(Constans.KEY_COLLECTION_CHAT)
@@ -181,5 +213,11 @@ public class ChatActivity extends AppCompatActivity {
                 Constans.KEY_LAST_MESSAGE, message,
                 Constans.KEY_TIMESTAMP,new Date()
         );
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        listenAvailabilityOfReceiver();
     }
 }

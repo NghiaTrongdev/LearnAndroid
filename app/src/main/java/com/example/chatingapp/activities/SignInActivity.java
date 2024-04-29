@@ -62,13 +62,22 @@ public class SignInActivity extends AppCompatActivity {
 
     }
     private void SignIn(){
+        // xét trạng thái loading để ét progressBar
         loading(true);
+
+        // tạo đối tượng tham chiếu đến database
         FirebaseFirestore database = FirebaseFirestore.getInstance();
+
+        // lấy trong database collection users
         database.collection(Constans.KEY_COLLECTION_USERS)
+
+                // sp query để lấy ra các dữ liệu tương ứng
                 .whereEqualTo(Constans.KEY_EMAIL,binding.inputEmail.getText().toString())
                 .whereEqualTo(Constans.KEY_PASSWORD,binding.inputPassword.getText().toString())
                 .get()
                 .addOnCompleteListener(task ->{
+
+                    // DocumentSnapshot chứa các dữ liệu của collection
                     if (task.isSuccessful() && task.getResult() != null && task.getResult().getDocuments().size()>0){
                         DocumentSnapshot documentSnapshot = task.getResult().getDocuments().get(0);
                         preferenceManager.putBoolean(Constans.KEY_IS_SIGNED_IN,true);
@@ -76,6 +85,8 @@ public class SignInActivity extends AppCompatActivity {
                         preferenceManager.putString(Constans.KEY_NAME,documentSnapshot.getString(Constans.KEY_NAME));
                         preferenceManager.putString(Constans.KEY_IMAGE,documentSnapshot.getString(Constans.KEY_IMAGE));
                         Intent intent = new Intent(getApplicationContext(),MainActivity.class);
+                         //Cấu hình Intent để xóa các Activity trước đó ra khỏi stack
+                        // và tạo một Task mới cho Activity mới được khởi chạy.
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(intent);
                     } else {
